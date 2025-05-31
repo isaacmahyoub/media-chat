@@ -89,17 +89,15 @@ MediaChat is a full-featured communication application built using Java Swing fo
         * (After chat connection is established) On the client interface, click "Send File" and select a file.
      
 ##  📸  Screenshots
+
 ### Login Interface
 ![Login Interface](https://github.com/user-attachments/assets/2d0bcb47-cef1-4323-b2cb-a19a353771d9)
-
-### Chat Client Interface
-![Chat Client Interface](https://github.com/user-attachments/assets/e18ea4c7-da70-4da3-af94-347d5fc65a79)
-
 
 ### Chat Server Interface
 ![Chat Server Interface](https://github.com/user-attachments/assets/91c679d1-274c-4e43-9e5a-3db58583507a)
 
-
+### Chat Client Interface
+![Chat Client Interface](https://github.com/user-attachments/assets/e18ea4c7-da70-4da3-af94-347d5fc65a79)
 
 
 ## ⚠️ Known Issues and Future Enhancements
