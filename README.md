@@ -40,7 +40,7 @@ MediaChat is a full-featured communication application built using Java Swing fo
 ### Prerequisites
 
 * Java Development Kit (JDK) 8 or later.
-* An Integrated Development Environment (IDE) such as Apache NetBeans or IntelliJ IDEA.
+* An Integrated Development Environment (IDE) Apache NetBeans.
 * A working webcam (for video calls).
 
 ### Project Setup
@@ -53,7 +53,7 @@ MediaChat is a full-featured communication application built using Java Swing fo
     *If you don't have a Git repository, you can manually download the project files.*
 
 2.  **Open Project in IDE:**
-    * Open the `MediaChat` project in your chosen IDE (NetBeans or IntelliJ IDEA).
+    * Open the `MediaChat` project in your chosen IDE (NetBeans).
 
 3.  **Add Libraries (Dependencies):**
     The following JAR files must be added to your project's build path (or Libraries):
@@ -99,7 +99,8 @@ MediaChat is a full-featured communication application built using Java Swing fo
 
 
 ### Chat Server Interface
-![Chat Server Interface]
+![Chat Server Interface](https://github.com/user-attachments/assets/91c679d1-274c-4e43-9e5a-3db58583507a)
+
 
 
 
@@ -113,10 +114,16 @@ MediaChat is a full-featured communication application built using Java Swing fo
 * **Camera/Microphone Detection:** Detection of audio and video devices could be improved to identify default devices or allow user selection.
 * **Disconnection Handling:** Improve how sudden disconnections from either the client or server side are handled.
 
+## 👥 Contributors
+
+* **Isaaq Mahyoub Abdulla**
+* **Moayyad Abdulghani Abdulla**
+* **Moneif Mustafa Abdulla**
+* **Mohammed Hassan Mohammed Abdulla**
+
+
 ## 🤝 Contributing
 
 Contributions are welcome! If you have suggestions or improvements, feel free to open an issue or submit a pull request.
 
-## 📄 License
 
-This project is licensed under the MIT License.
