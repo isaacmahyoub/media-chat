@@ -1,5 +1,3 @@
-# media-chat
-
 # 💬 MediaChat: A Comprehensive Chat, Voice, Video, and File Transfer Application
 
 MediaChat is a full-featured communication application built using Java Swing for the graphical user interface and Network Sockets for communication. The project aims to provide a comprehensive communication platform that supports text messages, voice calls, video calls, and the ability to send and receive files.
