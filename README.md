@@ -47,7 +47,7 @@ MediaChat is a full-featured communication application built using Java Swing fo
 
 1.  **Clone the Repository:**
     ```bash
-    git clone [YOUR_REPOSITORY_LINK_HERE]
+    git clone [https://github.com/isaacmahyoub/media-chat.git]
     cd MediaChat
     ```
     *If you don't have a Git repository, you can manually download the project files.*
@@ -92,7 +92,7 @@ MediaChat is a full-featured communication application built using Java Swing fo
      
 ##  📸  Screenshots
 ### Login Interface
-![Login Interface](![image](https://github.com/user-attachments/assets/3fa541c2-4467-4683-b0b6-e0a1fd9d2edf))
+![Login Interface](https://github.com/user-attachments/assets/3fa541c2-4467-4683-b0b6-e0a1fd9d2edf)
 
 ### Chat Client Interface
 ![Chat Client Interface](screenshots/chat_client.png)
