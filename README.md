@@ -116,10 +116,10 @@ MediaChat is a full-featured communication application built using Java Swing fo
 
 ## 👥 Contributors
 
-* **Isaaq Mahyoub Abdulla**
-* **Moayyad Abdulghani Abdulla**
-* **Moneif Mustafa Abdulla**
-* **Mohammed Hassan Mohammed Abdulla**
+* **Isaac Mahyoub Abdullah Abdulkhaliq**
+* **Moayad Abdulghani Abdullah Abdulkhaliq**
+* **Muneef Mustafa Abdullah Ibrahim**
+* **Mohammed Hassan Mohammed Abdullah**
 
 
 ## 🤝 Contributing
