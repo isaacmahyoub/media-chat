@@ -24,7 +24,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.text.DefaultCaret;
-import java.awt.image.BufferedImage; // Import for image scaling
+import java.awt.image.BufferedImage;
 
 public class ChatServer extends JFrame {
 
@@ -33,12 +33,12 @@ public class ChatServer extends JFrame {
     private JButton msg_send;
     private static JLabel serverStatusLabel;
 
-    private JButton voiceCallButton; // Combined start/end voice call button
-    private JButton videoCallButton; // Combined start/end video call button
+    private JButton voiceCallButton;
+    private JButton videoCallButton;
     private JLabel receivedVideoLabel;
     private JLabel voiceActivityLabel;
     private JLabel receivedVideoStatusLabel;
-    private JButton fileTransferButton; // Combined start/stop file receiver
+    private JButton fileTransferButton;
     private JProgressBar fileReceiveProgressBar;
     private JLabel fileReceiveStatusLabel;
 
@@ -52,9 +52,9 @@ public class ChatServer extends JFrame {
 
     private String connectedClientUsername = "Unknown Client";
 
-    private static final Color MY_MESSAGE_COLOR = new Color(208, 235, 255); // Blue-ish
-    private static final Color OTHER_MESSAGE_COLOR = new Color(232, 232, 250); // Light purple-ish
-    private static final Color SYSTEM_MESSAGE_COLOR = new Color(200, 200, 200); // Gray
+    private static final Color MY_MESSAGE_COLOR = new Color(208, 235, 255);
+    private static final Color OTHER_MESSAGE_COLOR = new Color(232, 232, 250);
+    private static final Color SYSTEM_MESSAGE_COLOR = new Color(200, 200, 200);
     private static final Color TEXT_COLOR = Color.BLACK;
 
     private static final Font MESSAGE_FONT = new Font("Segoe UI", Font.PLAIN, 13);
@@ -73,7 +73,7 @@ public class ChatServer extends JFrame {
             UIManager.put("Button.arc", 10);
             UIManager.put("Component.arc", 10);
             UIManager.put("ProgressBar.arc", 5);
-            UIManager.put("TextArea.roundRect", true); // Apply roundRect to JTextArea
+            UIManager.put("TextArea.roundRect", true);
             FlatLightLaf.setup();
         } catch (Exception e) {
             e.printStackTrace();
@@ -89,7 +89,6 @@ public class ChatServer extends JFrame {
 
     private void setupControlsState() {
         setChatControlsEnabled(false);
-        // Call the new updateMediaButtonState with icon paths
         updateMediaButtonState(voiceCallButton, VoiceServer.isVoiceCallActive(), "📞 Start Voice", "📞 End Voice", new Color(77, 171, 247), new Color(220, 53, 69), "/icons/call_icon.png", "/icons/end_call_icon.png");
         updateMediaButtonState(videoCallButton, VideoServer.isVideoCallActive(), "📹 Start Video", "📹 End Video", new Color(77, 171, 247), new Color(220, 53, 69), "/icons/video_icon.png", "/icons/end_video_icon.png");
         updateFileTransferButtonState(FileReceiver.isFileReceiverActive());
@@ -161,7 +160,6 @@ public class ChatServer extends JFrame {
 
         JScrollPane scrollPane = new JScrollPane(msg_area);
         scrollPane.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
-        // Ensure scrollbar always moves to bottom
         DefaultCaret caret = (DefaultCaret) msg_area.getCaret();
         caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
         mainPanel.add(scrollPane, "grow, wrap");
@@ -186,12 +184,10 @@ public class ChatServer extends JFrame {
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
                     if (e.isShiftDown()) {
-                        // Allow new line with Shift + Enter
                         msg_text.append("\n");
                     } else {
-                        // Send message with Enter
                         msg_sendActionPerformed(null);
-                        e.consume(); // Prevent adding a new line after sending
+                        e.consume();
                     }
                 }
             }
@@ -200,7 +196,7 @@ public class ChatServer extends JFrame {
         JScrollPane msgScrollPane = new JScrollPane(msg_text);
         msgScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         msgScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        msgScrollPane.setBorder(BorderFactory.createEmptyBorder()); // Remove default scroll pane border
+        msgScrollPane.setBorder(BorderFactory.createEmptyBorder());
 
         inputPanel.add(msgScrollPane, "growx, height 70::");
 
@@ -220,8 +216,6 @@ public class ChatServer extends JFrame {
     private void createMediaControls(JPanel mainPanel) {
         JPanel mediaControlPanel = new JPanel(new MigLayout("fillx, insets 0", "[grow, fill][grow, fill]", "[]"));
         mediaControlPanel.setBorder(BorderFactory.createTitledBorder("Media Controls"));
-
-        // Passing icon paths to the toggle button creator
         voiceCallButton = createMediaToggleButton("/icons/add_call.png", "📞 End Voice", VoiceServer.isVoiceCallActive(), new Color(77, 171, 247), new Color(220, 53, 69), "/icons/call_icon.png", "/icons/call_end.png");
         videoCallButton = createMediaToggleButton("📹 Start Video", "📹 End Video", VideoServer.isVideoCallActive(), new Color(77, 171, 247), new Color(220, 53, 69), "/icons/video_icon.png", "/icons/video_camera_front_off.png");
 
@@ -234,41 +228,14 @@ public class ChatServer extends JFrame {
         mainPanel.add(mediaControlPanel, "growx, wrap");
     }
 
-    // Modified createMediaToggleButton to accept icon paths
     private JButton createMediaToggleButton(String startText, String endText, boolean isActive, Color startColor, Color endColor, String startIconPath, String endIconPath) {
-        JButton button = new JButton(); // Create button without text
+        JButton button = new JButton();
         button.setFont(new Font("Segoe UI", Font.BOLD, 13));
         button.putClientProperty("JButton.buttonType", "roundRect");
         button.setBackground(isActive ? endColor : startColor);
         button.setForeground(Color.WHITE);
         button.setFocusPainted(false);
 
-        // Set icon based on active state
-        String currentIconPath = isActive ? endIconPath : startIconPath;
-        if (currentIconPath != null && !currentIconPath.isEmpty()) {
-            try {
-                ImageIcon icon = new ImageIcon(getClass().getResource(currentIconPath));
-                // Scale icon if needed
-                Image image = icon.getImage();
-                Image scaledImage = image.getScaledInstance(20, 20, Image.SCALE_SMOOTH); // Adjust size as needed
-                button.setIcon(new ImageIcon(scaledImage));
-                button.setText(""); // No text if icon is present
-            } catch (Exception e) {
-                System.err.println("Error loading icon from " + currentIconPath + ": " + e.getMessage());
-                button.setText(isActive ? endText : startText); // Fallback to text if icon fails
-            }
-        } else {
-            button.setText(isActive ? endText : startText); // Use text if no icon path provided
-        }
-
-        return button;
-    }
-
-    // Modified updateMediaButtonState to handle icon changes as well
-    private void updateMediaButtonState(JButton button, boolean isActive, String startText, String endText, Color startColor, Color endColor, String startIconPath, String endIconPath) {
-        button.setBackground(isActive ? endColor : startColor);
-
-        // Update icon based on active state
         String currentIconPath = isActive ? endIconPath : startIconPath;
         if (currentIconPath != null && !currentIconPath.isEmpty()) {
             try {
@@ -276,15 +243,37 @@ public class ChatServer extends JFrame {
                 Image image = icon.getImage();
                 Image scaledImage = image.getScaledInstance(20, 20, Image.SCALE_SMOOTH);
                 button.setIcon(new ImageIcon(scaledImage));
-                button.setText(""); // No text if icon is present
+                button.setText("");
             } catch (Exception e) {
                 System.err.println("Error loading icon from " + currentIconPath + ": " + e.getMessage());
-                button.setIcon(null); // Clear icon if error
-                button.setText(isActive ? endText : startText); // Fallback to text
+                button.setText(isActive ? endText : startText);
             }
         } else {
-            button.setIcon(null); // Clear icon if no path
-            button.setText(isActive ? endText : startText); // Use text
+            button.setText(isActive ? endText : startText);
+        }
+
+        return button;
+    }
+
+    private void updateMediaButtonState(JButton button, boolean isActive, String startText, String endText, Color startColor, Color endColor, String startIconPath, String endIconPath) {
+        button.setBackground(isActive ? endColor : startColor);
+
+        String currentIconPath = isActive ? endIconPath : startIconPath;
+        if (currentIconPath != null && !currentIconPath.isEmpty()) {
+            try {
+                ImageIcon icon = new ImageIcon(getClass().getResource(currentIconPath));
+                Image image = icon.getImage();
+                Image scaledImage = image.getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+                button.setIcon(new ImageIcon(scaledImage));
+                button.setText("");
+            } catch (Exception e) {
+                System.err.println("Error loading icon from " + currentIconPath + ": " + e.getMessage());
+                button.setIcon(null);
+                button.setText(isActive ? endText : startText);
+            }
+        } else {
+            button.setIcon(null);
+            button.setText(isActive ? endText : startText);
         }
     }
 
@@ -293,14 +282,12 @@ public class ChatServer extends JFrame {
         if (!VoiceServer.isVoiceCallActive()) {
             VoiceServer.startVoiceServer();
             appendSystemMessage("--- Voice Server Started ---");
-            // Call the new updateMediaButtonState with icon paths
             updateMediaButtonState(voiceCallButton, true, "📞 Start Voice", "📞 End Voice", new Color(77, 171, 247), new Color(220, 53, 69), "/icons/call_icon.png", "/icons/end_call_icon.png");
-            voiceActivityLabel.setForeground(new Color(40, 167, 69)); // Green for active
+            voiceActivityLabel.setForeground(new Color(40, 167, 69));
             voiceActivityLabel.setText("Voice: Active");
         } else {
             VoiceServer.stopVoiceServer();
             appendSystemMessage("--- Voice Server Stopped ---");
-            // Call the new updateMediaButtonState with icon paths
             updateMediaButtonState(voiceCallButton, false, "📞 Start Voice", "📞 End Voice", new Color(77, 171, 247), new Color(220, 53, 69), "/icons/call_icon.png", "/icons/end_call_icon.png");
             voiceActivityLabel.setForeground(Color.GRAY);
             voiceActivityLabel.setText("Voice: Off");
@@ -311,14 +298,12 @@ public class ChatServer extends JFrame {
         if (!VideoServer.isVideoCallActive()) {
             VideoServer.startVideoServer();
             appendSystemMessage("--- Video Server Started ---");
-            // Call the new updateMediaButtonState with icon paths
             updateMediaButtonState(videoCallButton, true, "/icons/video_call.png", "/icons/video_camera_front_off.png", new Color(77, 171, 247), new Color(220, 53, 69), "/icons/video_icon.png", "/icons/end_video_icon.png");
-            receivedVideoStatusLabel.setForeground(new Color(40, 167, 69)); // Green for active
+            receivedVideoStatusLabel.setForeground(new Color(40, 167, 69));
             receivedVideoStatusLabel.setText("Video: Active");
         } else {
             VideoServer.stopVideoServer();
             appendSystemMessage("--- Video Server Stopped ---");
-            // Call the new updateMediaButtonState with icon paths
             updateMediaButtonState(videoCallButton, false, "📹 Start Video", "📹 End Video", new Color(77, 171, 247), new Color(220, 53, 69), "/icons/video_icon.png", "/icons/end_video_icon.png");
             receivedVideoStatusLabel.setForeground(Color.GRAY);
             receivedVideoStatusLabel.setText("Video: Off");
@@ -334,8 +319,6 @@ public class ChatServer extends JFrame {
         fileReceiveProgressBar.putClientProperty("JProgressBar.roundRect", true);
         fileTransferPanel.add(fileReceiveProgressBar, "growx, height 25!");
 
-        // Assuming fileTransferButton is also a toggle button that might use icons
-        // If FileReceiver doesn't have start/stop icons, you can pass null for icon paths
         fileTransferButton = createMediaToggleButton("📥 Start File Receiver", "⏹ Stop File Receiver", FileReceiver.isFileReceiverActive(), new Color(108, 117, 125), new Color(255, 193, 7), "/icons/download_icon.png", "/icons/stop_icon.png");
         fileTransferButton.addActionListener(this::toggleFileReceiverActionPerformed);
         fileTransferPanel.add(fileTransferButton, "width 180!, wrap");
@@ -349,25 +332,23 @@ public class ChatServer extends JFrame {
     }
 
     private void updateFileTransferButtonState(boolean isActive) {
-        // This method also needs to be updated to handle icons, similar to updateMediaButtonState
-        // This is based on the logic in the original FileReceiver code, but simplified for the button itself.
         String startText = "📥 Start File Receiver";
         String stopText = "⏹ Stop File Receiver";
         Color startColor = new Color(108, 117, 125);
         Color stopColor = new Color(255, 193, 7);
-        String startIconPath = "/icons/download_icon.png"; // Placeholder icon path
-        String stopIconPath = "/icons/stop_icon.png";       // Placeholder icon path
+        String startIconPath = "/icons/download_icon.png";
+        String stopIconPath = "/icons/stop_icon.png";
 
         if (isActive) {
             updateMediaButtonState(fileTransferButton, true, startText, stopText, startColor, stopColor, startIconPath, stopIconPath);
-            fileReceiveStatusLabel.setForeground(new Color(40, 167, 69)); // Green for active
+            fileReceiveStatusLabel.setForeground(new Color(40, 167, 69));
             fileReceiveStatusLabel.setText("File Server Active");
         } else {
             updateMediaButtonState(fileTransferButton, false, startText, stopText, startColor, stopColor, startIconPath, stopIconPath);
             fileReceiveStatusLabel.setForeground(Color.GRAY);
             fileReceiveStatusLabel.setText("File Server Off");
         }
-        fileTransferButton.setEnabled(true); // Always enable toggle button
+        fileTransferButton.setEnabled(true);
     }
 
     private void toggleFileReceiverActionPerformed(ActionEvent evt) {
@@ -561,7 +542,7 @@ public class ChatServer extends JFrame {
                 serversocket = new ServerSocket(CHAT_PORT);
                 SwingUtilities.invokeLater(() -> {
                     serverStatusLabel.setText("Waiting for connection on port " + CHAT_PORT + "...");
-                    serverStatusLabel.setForeground(new Color(255, 165, 0)); // Orange for waiting
+                    serverStatusLabel.setForeground(new Color(255, 165, 0));
                 });
                 appendSystemMessage("Server started, waiting for client...");
 
@@ -575,14 +556,14 @@ public class ChatServer extends JFrame {
                     connectedClientUsername = initialMessage.substring("USERNAME:".length());
                     SwingUtilities.invokeLater(() -> {
                         serverStatusLabel.setText("Client Connected: " + connectedClientUsername);
-                        serverStatusLabel.setForeground(new Color(40, 167, 69)); // Green for connected
+                        serverStatusLabel.setForeground(new Color(40, 167, 69));
                         setChatControlsEnabled(true);
                     });
                     appendSystemMessage("--- Client " + connectedClientUsername + " Connected ---");
                 } else {
                     SwingUtilities.invokeLater(() -> {
                         serverStatusLabel.setText("Client Connected (No Username)");
-                        serverStatusLabel.setForeground(new Color(40, 167, 69)); // Green for connected
+                        serverStatusLabel.setForeground(new Color(40, 167, 69));
                         setChatControlsEnabled(true);
                     });
                     appendSystemMessage("--- Client Connected (No Username) ---");
@@ -609,7 +590,7 @@ public class ChatServer extends JFrame {
 
                 SwingUtilities.invokeLater(() -> {
                     serverStatusLabel.setText("Error: " + displayError);
-                    serverStatusLabel.setForeground(new Color(220, 53, 69)); // Red for error
+                    serverStatusLabel.setForeground(new Color(220, 53, 69));
                     setChatControlsEnabled(false);
                 });
                 appendSystemMessage("ERROR: " + displayError);
@@ -624,8 +605,6 @@ public class ChatServer extends JFrame {
                     if (socket != null) {
                         socket.close();
                     }
-                    // Only close serversocket if it's the main server thread exiting cleanly,
-                    // or if the window is closing.
                     if (!serverRunning.get() && serversocket != null && !serversocket.isClosed()) {
                         serversocket.close();
                     }
@@ -633,8 +612,6 @@ public class ChatServer extends JFrame {
                         serverStatusLabel.setText("Server Stopped.");
                         serverStatusLabel.setForeground(Color.GRAY);
                         setChatControlsEnabled(false);
-                        // Reset media buttons on server stop
-                        // Updated calls to updateMediaButtonState with icon paths
                         updateMediaButtonState(voiceCallButton, false, "📞 Start Voice", "📞 End Voice", new Color(77, 171, 247), new Color(220, 53, 69), "/icons/call_icon.png", "/icons/end_call_icon.png");
                         updateMediaButtonState(videoCallButton, false, "📹 Start Video", "📹 End Video", new Color(77, 171, 247), new Color(220, 53, 69), "/icons/video_call.png", "/icons/video_camera_front_off.png");
                         updateFileTransferButtonState(false);
@@ -656,7 +633,7 @@ public class ChatServer extends JFrame {
     @Override
     protected void processWindowEvent(java.awt.event.WindowEvent e) {
         if (e.getID() == java.awt.event.WindowEvent.WINDOW_CLOSING) {
-            serverRunning.set(false); // Signal the server thread to stop
+            serverRunning.set(false);
             if (VoiceServer.isVoiceCallActive()) {
                 VoiceServer.stopVoiceServer();
             }
@@ -668,12 +645,12 @@ public class ChatServer extends JFrame {
             }
             if (serversocket != null && !serversocket.isClosed()) {
                 try {
-                    serversocket.close(); // Close the server socket explicitly
+                    serversocket.close();
                 } catch (IOException ex) {
                     System.err.println("Error closing main server socket during shutdown: " + ex.getMessage());
                 }
             }
-            dispose(); // Release window resources
+            dispose();
         }
         super.processWindowEvent(e);
     }
