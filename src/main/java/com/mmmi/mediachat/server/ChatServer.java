@@ -3,35 +3,42 @@ package com.mmmi.mediachat.server;
 import com.formdev.flatlaf.FlatLightLaf;
 import net.miginfocom.swing.MigLayout;
 
+import javax.swing.ImageIcon;
 import javax.swing.*;
-import javax.swing.text.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.plaf.basic.BasicTextAreaUI;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.swing.text.DefaultCaret;
+import java.awt.image.BufferedImage; // Import for image scaling
 
 public class ChatServer extends JFrame {
 
     private static JTextPane msg_area;
-    private JTextField msg_text;
+    private JTextArea msg_text;
     private JButton msg_send;
     private static JLabel serverStatusLabel;
 
-    private JButton startVoiceCallButton;
-    private JButton endVoiceCallButton;
-    private JButton startVideoCallButton;
-    private JButton endVideoCallButton;
+    private JButton voiceCallButton; // Combined start/end voice call button
+    private JButton videoCallButton; // Combined start/end video call button
     private JLabel receivedVideoLabel;
     private JLabel voiceActivityLabel;
     private JLabel receivedVideoStatusLabel;
-    private JButton startFileReceiverButton;
+    private JButton fileTransferButton; // Combined start/stop file receiver
     private JProgressBar fileReceiveProgressBar;
     private JLabel fileReceiveStatusLabel;
 
@@ -44,41 +51,78 @@ public class ChatServer extends JFrame {
     private static AtomicBoolean serverRunning = new AtomicBoolean(false);
 
     private String connectedClientUsername = "Unknown Client";
-    private static final Color MY_MESSAGE_COLOR = new Color(240, 240, 240);
-    private static final Color OTHER_MESSAGE_COLOR = new Color(220, 248, 198);
-    private static final Color SYSTEM_MESSAGE_COLOR = new Color(100, 100, 100);
+
+    private static final Color MY_MESSAGE_COLOR = new Color(208, 235, 255); // Blue-ish
+    private static final Color OTHER_MESSAGE_COLOR = new Color(232, 232, 250); // Light purple-ish
+    private static final Color SYSTEM_MESSAGE_COLOR = new Color(200, 200, 200); // Gray
     private static final Color TEXT_COLOR = Color.BLACK;
+
     private static final Font MESSAGE_FONT = new Font("Segoe UI", Font.PLAIN, 13);
 
-
     public ChatServer() {
+        setupFlatLaf();
         initComponents();
-        setChatControlsEnabled(false);
-        endVoiceCallButton.setEnabled(false);
-        endVideoCallButton.setEnabled(false);
-        voiceActivityLabel.setText("Voice: Off");
-        voiceActivityLabel.setForeground(Color.GRAY);
-        receivedVideoStatusLabel.setText("Video: Off");
-        receivedVideoStatusLabel.setForeground(Color.GRAY);
-        fileReceiveStatusLabel.setText("File Server Off");
-        fileReceiveStatusLabel.setForeground(Color.GRAY);
-        startFileReceiverButton.setEnabled(true);
-        
+        setupWindow();
+        setupControlsState();
         FileReceiver.setFileTransferUI(fileReceiveProgressBar, fileReceiveStatusLabel);
         startServerThread();
     }
 
-    private void initComponents() {
+    private void setupFlatLaf() {
+        try {
+            UIManager.put("Button.arc", 10);
+            UIManager.put("Component.arc", 10);
+            UIManager.put("ProgressBar.arc", 5);
+            UIManager.put("TextArea.roundRect", true); // Apply roundRect to JTextArea
+            FlatLightLaf.setup();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void setupWindow() {
         setTitle("MediaChat Server");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(850, 800);
         setLocationRelativeTo(null);
+    }
 
+    private void setupControlsState() {
+        setChatControlsEnabled(false);
+        // Call the new updateMediaButtonState with icon paths
+        updateMediaButtonState(voiceCallButton, VoiceServer.isVoiceCallActive(), "📞 Start Voice", "📞 End Voice", new Color(77, 171, 247), new Color(220, 53, 69), "/icons/call_icon.png", "/icons/end_call_icon.png");
+        updateMediaButtonState(videoCallButton, VideoServer.isVideoCallActive(), "📹 Start Video", "📹 End Video", new Color(77, 171, 247), new Color(220, 53, 69), "/icons/video_icon.png", "/icons/end_video_icon.png");
+        updateFileTransferButtonState(FileReceiver.isFileReceiverActive());
+
+        voiceActivityLabel.setText("Voice: Off");
+        voiceActivityLabel.setForeground(Color.GRAY);
+        receivedVideoStatusLabel.setText("Video: Off");
+        receivedVideoStatusLabel.setForeground(Color.GRAY);
+    }
+
+    private void initComponents() {
         JPanel mainPanel = new JPanel(new MigLayout("fill, insets 10", "[grow, fill]", "[][grow, fill][][][][][grow, fill]"));
+        mainPanel.setBackground(new Color(240, 240, 240));
 
+        createStatusPanel(mainPanel);
+        createMessageArea(mainPanel);
+        createInputPanel(mainPanel);
+        createMediaControls(mainPanel);
+        createFileTransferPanel(mainPanel);
+        createVideoPanel(mainPanel);
+
+        add(mainPanel);
+        msg_text.requestFocusInWindow();
+    }
+
+    private void createStatusPanel(JPanel mainPanel) {
         JPanel statusPanel = new JPanel(new MigLayout("fillx, insets 5", "[grow][right]", "[]"));
         statusPanel.setBackground(new Color(230, 240, 250));
-        statusPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        statusPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200)),
+                BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
+
         serverStatusLabel = new JLabel("Initializing Server...");
         serverStatusLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
         serverStatusLabel.setForeground(new Color(50, 50, 50));
@@ -86,158 +130,215 @@ public class ChatServer extends JFrame {
 
         JPanel indicatorsPanel = new JPanel(new MigLayout("insets 0", "[][][]", "[]"));
         indicatorsPanel.setOpaque(false);
-        voiceActivityLabel = new JLabel("Voice: Off");
-        voiceActivityLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        voiceActivityLabel.setForeground(Color.GRAY);
-        indicatorsPanel.add(voiceActivityLabel, "gapx 10");
 
-        receivedVideoStatusLabel = new JLabel("Video: Off");
-        receivedVideoStatusLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        receivedVideoStatusLabel.setForeground(Color.GRAY);
+        voiceActivityLabel = createStatusIndicator("Voice: Off", Color.GRAY);
+        receivedVideoStatusLabel = createStatusIndicator("Video: Off", Color.GRAY);
+
+        indicatorsPanel.add(voiceActivityLabel, "gapx 10");
         indicatorsPanel.add(receivedVideoStatusLabel, "gapx 10");
 
         statusPanel.add(indicatorsPanel, "wrap, right");
         mainPanel.add(statusPanel, "wrap, growx");
+    }
 
+    private JLabel createStatusIndicator(String text, Color initialColor) {
+        JLabel label = new JLabel(text);
+        label.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        label.setForeground(initialColor);
+        return label;
+    }
+
+    private void createMessageArea(JPanel mainPanel) {
         msg_area = new JTextPane();
         msg_area.setEditable(false);
         msg_area.setFont(MESSAGE_FONT);
-        msg_area.setBackground(new Color(230, 230, 230));
-        msg_area.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        msg_area.setBackground(new Color(250, 250, 250));
+        msg_area.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200)),
+                BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
         msg_area.setContentType("text/html");
-
 
         JScrollPane scrollPane = new JScrollPane(msg_area);
         scrollPane.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
+        // Ensure scrollbar always moves to bottom
+        DefaultCaret caret = (DefaultCaret) msg_area.getCaret();
+        caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
         mainPanel.add(scrollPane, "grow, wrap");
+    }
 
+    private void createInputPanel(JPanel mainPanel) {
         JPanel inputPanel = new JPanel(new MigLayout("fillx, insets 0", "[grow, fill][]", "[]"));
-        msg_text = new JTextField();
-        msg_text.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+
+        msg_text = new JTextArea(3, 20);
+        msg_text.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        msg_text.setWrapStyleWord(true);
+        msg_text.setLineWrap(true);
         msg_text.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(180, 180, 180)),
-                BorderFactory.createEmptyBorder(5, 10, 5, 10)
+                BorderFactory.createLineBorder(new Color(180, 180, 180), 1),
+                BorderFactory.createEmptyBorder(10, 10, 10, 10)
         ));
-        msg_text.addActionListener(new ActionListener() {
+
+        new PlaceholderRenderer(msg_text, "اكتب رسالتك...");
+
+        msg_text.addKeyListener(new KeyAdapter() {
             @Override
-            public void actionPerformed(ActionEvent e) {
-                msg_sendActionPerformed(e);
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    if (e.isShiftDown()) {
+                        // Allow new line with Shift + Enter
+                        msg_text.append("\n");
+                    } else {
+                        // Send message with Enter
+                        msg_sendActionPerformed(null);
+                        e.consume(); // Prevent adding a new line after sending
+                    }
+                }
             }
         });
-        inputPanel.add(msg_text, "growx");
 
-        msg_send = new JButton("Send");
-        msg_send.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        JScrollPane msgScrollPane = new JScrollPane(msg_text);
+        msgScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        msgScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        msgScrollPane.setBorder(BorderFactory.createEmptyBorder()); // Remove default scroll pane border
+
+        inputPanel.add(msgScrollPane, "growx, height 70::");
+
+        msg_send = new JButton("<html><div style='text-align: center;'>&#x27A4;</div></html>");
+        msg_send.setFont(new Font("Segoe UI Emoji", Font.BOLD, 24));
+        msg_send.putClientProperty("JButton.buttonType", "roundRect");
         msg_send.setBackground(new Color(0, 123, 255));
         msg_send.setForeground(Color.WHITE);
         msg_send.setFocusPainted(false);
-        msg_send.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
-        msg_send.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                msg_sendActionPerformed(e);
-            }
-        });
-        inputPanel.add(msg_send, "width 80!");
+        msg_send.setMargin(new Insets(0, 0, 0, 0));
+        msg_send.addActionListener(this::msg_sendActionPerformed);
+        inputPanel.add(msg_send, "width 50!, height 50!, aligny bottom, gapbottom 10");
         mainPanel.add(inputPanel, "growx, wrap");
 
-        JPanel mediaControlPanel = new JPanel(new MigLayout("fillx, insets 0", "[grow, fill][grow, fill][grow, fill][grow, fill]", "[]"));
+    }
+
+    private void createMediaControls(JPanel mainPanel) {
+        JPanel mediaControlPanel = new JPanel(new MigLayout("fillx, insets 0", "[grow, fill][grow, fill]", "[]"));
         mediaControlPanel.setBorder(BorderFactory.createTitledBorder("Media Controls"));
 
-        startVoiceCallButton = new JButton("Start Voice Call");
-        startVoiceCallButton.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        startVoiceCallButton.setBackground(new Color(40, 167, 69));
-        startVoiceCallButton.setForeground(Color.WHITE);
-        startVoiceCallButton.setFocusPainted(false);
-        startVoiceCallButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (!VoiceServer.isVoiceCallActive()) {
-                    VoiceServer.startVoiceServer();
-                    appendSystemMessage("--- Voice Server Started ---");
-                    startVoiceCallButton.setEnabled(false);
-                    endVoiceCallButton.setEnabled(true);
-                }
-            }
-        });
-        mediaControlPanel.add(startVoiceCallButton, "growx");
+        // Passing icon paths to the toggle button creator
+        voiceCallButton = createMediaToggleButton("/icons/add_call.png", "📞 End Voice", VoiceServer.isVoiceCallActive(), new Color(77, 171, 247), new Color(220, 53, 69), "/icons/call_icon.png", "/icons/call_end.png");
+        videoCallButton = createMediaToggleButton("📹 Start Video", "📹 End Video", VideoServer.isVideoCallActive(), new Color(77, 171, 247), new Color(220, 53, 69), "/icons/video_icon.png", "/icons/video_camera_front_off.png");
 
-        endVoiceCallButton = new JButton("End Voice Call");
-        endVoiceCallButton.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        endVoiceCallButton.setBackground(new Color(220, 53, 69));
-        endVoiceCallButton.setForeground(Color.WHITE);
-        endVoiceCallButton.setFocusPainted(false);
-        endVoiceCallButton.setEnabled(false);
-        endVoiceCallButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (VoiceServer.isVoiceCallActive()) {
-                    VoiceServer.stopVoiceServer();
-                    appendSystemMessage("--- Voice Server Stopped ---");
-                    startVoiceCallButton.setEnabled(true);
-                    endVoiceCallButton.setEnabled(false);
-                }
-            }
-        });
-        mediaControlPanel.add(endVoiceCallButton, "growx");
+        voiceCallButton.addActionListener(e -> toggleVoiceCall());
+        videoCallButton.addActionListener(e -> toggleVideoCall());
 
-        startVideoCallButton = new JButton("Start Video Call");
-        startVideoCallButton.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        startVideoCallButton.setBackground(new Color(255, 140, 0));
-        startVideoCallButton.setForeground(Color.WHITE);
-        startVideoCallButton.setFocusPainted(false);
-        startVideoCallButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (!VideoServer.isVideoCallActive()) {
-                    VideoServer.startVideoServer();
-                    appendSystemMessage("--- Video Server Started ---");
-                    startVideoCallButton.setEnabled(false);
-                    endVideoCallButton.setEnabled(true);
-                }
-            }
-        });
-        mediaControlPanel.add(startVideoCallButton, "growx");
+        mediaControlPanel.add(voiceCallButton, "growx");
+        mediaControlPanel.add(videoCallButton, "growx, wrap");
 
-        endVideoCallButton = new JButton("End Video Call");
-        endVideoCallButton.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        endVideoCallButton.setBackground(new Color(220, 53, 69));
-        endVideoCallButton.setForeground(Color.WHITE);
-        endVideoCallButton.setFocusPainted(false);
-        endVideoCallButton.setEnabled(false);
-        endVideoCallButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (VideoServer.isVideoCallActive()) {
-                    VideoServer.stopVideoServer();
-                    appendSystemMessage("--- Video Server Stopped ---");
-                    startVideoCallButton.setEnabled(true);
-                    endVideoCallButton.setEnabled(false);
-                }
-            }
-        });
-        mediaControlPanel.add(endVideoCallButton, "growx, wrap");
         mainPanel.add(mediaControlPanel, "growx, wrap");
+    }
 
+    // Modified createMediaToggleButton to accept icon paths
+    private JButton createMediaToggleButton(String startText, String endText, boolean isActive, Color startColor, Color endColor, String startIconPath, String endIconPath) {
+        JButton button = new JButton(); // Create button without text
+        button.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        button.putClientProperty("JButton.buttonType", "roundRect");
+        button.setBackground(isActive ? endColor : startColor);
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+
+        // Set icon based on active state
+        String currentIconPath = isActive ? endIconPath : startIconPath;
+        if (currentIconPath != null && !currentIconPath.isEmpty()) {
+            try {
+                ImageIcon icon = new ImageIcon(getClass().getResource(currentIconPath));
+                // Scale icon if needed
+                Image image = icon.getImage();
+                Image scaledImage = image.getScaledInstance(20, 20, Image.SCALE_SMOOTH); // Adjust size as needed
+                button.setIcon(new ImageIcon(scaledImage));
+                button.setText(""); // No text if icon is present
+            } catch (Exception e) {
+                System.err.println("Error loading icon from " + currentIconPath + ": " + e.getMessage());
+                button.setText(isActive ? endText : startText); // Fallback to text if icon fails
+            }
+        } else {
+            button.setText(isActive ? endText : startText); // Use text if no icon path provided
+        }
+
+        return button;
+    }
+
+    // Modified updateMediaButtonState to handle icon changes as well
+    private void updateMediaButtonState(JButton button, boolean isActive, String startText, String endText, Color startColor, Color endColor, String startIconPath, String endIconPath) {
+        button.setBackground(isActive ? endColor : startColor);
+
+        // Update icon based on active state
+        String currentIconPath = isActive ? endIconPath : startIconPath;
+        if (currentIconPath != null && !currentIconPath.isEmpty()) {
+            try {
+                ImageIcon icon = new ImageIcon(getClass().getResource(currentIconPath));
+                Image image = icon.getImage();
+                Image scaledImage = image.getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+                button.setIcon(new ImageIcon(scaledImage));
+                button.setText(""); // No text if icon is present
+            } catch (Exception e) {
+                System.err.println("Error loading icon from " + currentIconPath + ": " + e.getMessage());
+                button.setIcon(null); // Clear icon if error
+                button.setText(isActive ? endText : startText); // Fallback to text
+            }
+        } else {
+            button.setIcon(null); // Clear icon if no path
+            button.setText(isActive ? endText : startText); // Use text
+        }
+    }
+
+
+    private void toggleVoiceCall() {
+        if (!VoiceServer.isVoiceCallActive()) {
+            VoiceServer.startVoiceServer();
+            appendSystemMessage("--- Voice Server Started ---");
+            // Call the new updateMediaButtonState with icon paths
+            updateMediaButtonState(voiceCallButton, true, "📞 Start Voice", "📞 End Voice", new Color(77, 171, 247), new Color(220, 53, 69), "/icons/call_icon.png", "/icons/end_call_icon.png");
+            voiceActivityLabel.setForeground(new Color(40, 167, 69)); // Green for active
+            voiceActivityLabel.setText("Voice: Active");
+        } else {
+            VoiceServer.stopVoiceServer();
+            appendSystemMessage("--- Voice Server Stopped ---");
+            // Call the new updateMediaButtonState with icon paths
+            updateMediaButtonState(voiceCallButton, false, "📞 Start Voice", "📞 End Voice", new Color(77, 171, 247), new Color(220, 53, 69), "/icons/call_icon.png", "/icons/end_call_icon.png");
+            voiceActivityLabel.setForeground(Color.GRAY);
+            voiceActivityLabel.setText("Voice: Off");
+        }
+    }
+
+    private void toggleVideoCall() {
+        if (!VideoServer.isVideoCallActive()) {
+            VideoServer.startVideoServer();
+            appendSystemMessage("--- Video Server Started ---");
+            // Call the new updateMediaButtonState with icon paths
+            updateMediaButtonState(videoCallButton, true, "/icons/video_call.png", "/icons/video_camera_front_off.png", new Color(77, 171, 247), new Color(220, 53, 69), "/icons/video_icon.png", "/icons/end_video_icon.png");
+            receivedVideoStatusLabel.setForeground(new Color(40, 167, 69)); // Green for active
+            receivedVideoStatusLabel.setText("Video: Active");
+        } else {
+            VideoServer.stopVideoServer();
+            appendSystemMessage("--- Video Server Stopped ---");
+            // Call the new updateMediaButtonState with icon paths
+            updateMediaButtonState(videoCallButton, false, "📹 Start Video", "📹 End Video", new Color(77, 171, 247), new Color(220, 53, 69), "/icons/video_icon.png", "/icons/end_video_icon.png");
+            receivedVideoStatusLabel.setForeground(Color.GRAY);
+            receivedVideoStatusLabel.setText("Video: Off");
+        }
+    }
+
+    private void createFileTransferPanel(JPanel mainPanel) {
         JPanel fileTransferPanel = new JPanel(new MigLayout("fillx, insets 0", "[grow, fill][]", "[]"));
         fileTransferPanel.setBorder(BorderFactory.createTitledBorder("File Reception"));
 
         fileReceiveProgressBar = new JProgressBar(0, 100);
         fileReceiveProgressBar.setStringPainted(true);
+        fileReceiveProgressBar.putClientProperty("JProgressBar.roundRect", true);
         fileTransferPanel.add(fileReceiveProgressBar, "growx, height 25!");
 
-        startFileReceiverButton = new JButton("Start File Receiver");
-        startFileReceiverButton.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        startFileReceiverButton.setBackground(new Color(108, 117, 125));
-        startFileReceiverButton.setForeground(Color.WHITE);
-        startFileReceiverButton.setFocusPainted(false);
-        startFileReceiverButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                startFileReceiverActionPerformed(e);
-            }
-        });
-        fileTransferPanel.add(startFileReceiverButton, "width 160!, wrap");
+        // Assuming fileTransferButton is also a toggle button that might use icons
+        // If FileReceiver doesn't have start/stop icons, you can pass null for icon paths
+        fileTransferButton = createMediaToggleButton("📥 Start File Receiver", "⏹ Stop File Receiver", FileReceiver.isFileReceiverActive(), new Color(108, 117, 125), new Color(255, 193, 7), "/icons/download_icon.png", "/icons/stop_icon.png");
+        fileTransferButton.addActionListener(this::toggleFileReceiverActionPerformed);
+        fileTransferPanel.add(fileTransferButton, "width 180!, wrap");
 
         fileReceiveStatusLabel = new JLabel("File Server Off");
         fileReceiveStatusLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
@@ -245,23 +346,59 @@ public class ChatServer extends JFrame {
         fileTransferPanel.add(fileReceiveStatusLabel, "span 2, growx");
 
         mainPanel.add(fileTransferPanel, "growx, wrap");
+    }
 
+    private void updateFileTransferButtonState(boolean isActive) {
+        // This method also needs to be updated to handle icons, similar to updateMediaButtonState
+        // This is based on the logic in the original FileReceiver code, but simplified for the button itself.
+        String startText = "📥 Start File Receiver";
+        String stopText = "⏹ Stop File Receiver";
+        Color startColor = new Color(108, 117, 125);
+        Color stopColor = new Color(255, 193, 7);
+        String startIconPath = "/icons/download_icon.png"; // Placeholder icon path
+        String stopIconPath = "/icons/stop_icon.png";       // Placeholder icon path
+
+        if (isActive) {
+            updateMediaButtonState(fileTransferButton, true, startText, stopText, startColor, stopColor, startIconPath, stopIconPath);
+            fileReceiveStatusLabel.setForeground(new Color(40, 167, 69)); // Green for active
+            fileReceiveStatusLabel.setText("File Server Active");
+        } else {
+            updateMediaButtonState(fileTransferButton, false, startText, stopText, startColor, stopColor, startIconPath, stopIconPath);
+            fileReceiveStatusLabel.setForeground(Color.GRAY);
+            fileReceiveStatusLabel.setText("File Server Off");
+        }
+        fileTransferButton.setEnabled(true); // Always enable toggle button
+    }
+
+    private void toggleFileReceiverActionPerformed(ActionEvent evt) {
+        if (!FileReceiver.isFileReceiverActive()) {
+            FileReceiver.startFileReceiver();
+            appendSystemMessage("--- File Receiver Started ---");
+        } else {
+            FileReceiver.stopFileReceiver();
+            appendSystemMessage("--- File Receiver Stopped ---");
+        }
+        updateFileTransferButtonState(FileReceiver.isFileReceiverActive());
+    }
+
+
+    private void createVideoPanel(JPanel mainPanel) {
         JPanel receivedVideoPanel = new JPanel(new MigLayout("fill, insets 5", "[grow, fill]", "[grow, fill]"));
-        receivedVideoPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(new Color(150, 150, 150)), "Received Video Feed"));
+        receivedVideoPanel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(new Color(150, 150, 150)),
+                "Received Video Feed"
+        ));
         receivedVideoPanel.setBackground(Color.BLACK);
 
         receivedVideoLabel = new JLabel();
         receivedVideoLabel.setHorizontalAlignment(SwingConstants.CENTER);
         receivedVideoPanel.add(receivedVideoLabel, "grow, push");
-        
+
         VideoServer.setVideoDisplayLabel(receivedVideoLabel);
         VideoServer.setReceivedVideoStatusLabel(receivedVideoStatusLabel);
         VoiceServer.setVoiceActivityLabel(voiceActivityLabel);
 
         mainPanel.add(receivedVideoPanel, "grow, push");
-
-        add(mainPanel);
-        msg_text.requestFocusInWindow();
     }
 
     private void msg_sendActionPerformed(ActionEvent evt) {
@@ -279,28 +416,78 @@ public class ChatServer extends JFrame {
                 }
             }
         } catch (IOException ex) {
-            ex.printStackTrace();
             appendSystemMessage("Error sending message: " + ex.getMessage());
         } catch (Exception ex) {
-            ex.printStackTrace();
             appendSystemMessage("An unexpected error occurred: " + ex.getMessage());
         }
     }
 
-    // دوال مساعدة لإضافة الرسائل مع تنسيق
-    private static void appendMessage(String message, Color bgColor, Color fgColor, int alignment) {
+    private static void appendMyMessage(String fullMessage) {
+        String[] parts = fullMessage.split(":", 2);
+        String sender = parts[0];
+        String messageContent = (parts.length > 1) ? parts[1].trim() : "";
+        appendMessage(messageContent, MY_MESSAGE_COLOR, TEXT_COLOR, SwingConstants.RIGHT, sender);
+    }
+
+    private static void appendOtherMessage(String fullMessage) {
+        String[] parts = fullMessage.split(":", 2);
+        String sender = parts[0];
+        String messageContent = (parts.length > 1) ? parts[1].trim() : "";
+        appendMessage(messageContent, OTHER_MESSAGE_COLOR, TEXT_COLOR, SwingConstants.LEFT, sender);
+    }
+
+    private static void appendMessage(String messageContent, Color bgColor, Color fgColor, int alignment, String sender) {
         SwingUtilities.invokeLater(() -> {
             HTMLEditorKit editorKit = (HTMLEditorKit) msg_area.getEditorKit();
             HTMLDocument doc = (HTMLDocument) msg_area.getDocument();
 
+            String displayName = (alignment == SwingConstants.RIGHT) ? "Server" : sender;
+
+            String borderRadius = (alignment == SwingConstants.RIGHT)
+                    ? "border-radius: 12px 12px 0 12px;"
+                    : "border-radius: 12px 12px 12px 0;";
+
+            String marginStyle = (alignment == SwingConstants.RIGHT)
+                    ? "margin-left: auto; margin-right: 5px;"
+                    : "margin-right: auto; margin-left: 5px;";
+
             String htmlContent = String.format(
-                "<div style='background-color:%s; color:%s; padding: 8px; margin: 2px 0; border-radius: 8px; max-width: 70%%; float: %s; clear: both;'>%s</div>",
-                toHexString(bgColor),
-                toHexString(fgColor),
-                (alignment == StyleConstants.ALIGN_RIGHT ? "right" : "left"),
-                escapeHtml(message)
+                    "<div style='"
+                    + "display: flex;"
+                    + "width: 100%%;"
+                    + "justify-content: %s;"
+                    + "margin: 8px 0;"
+                    + "'>"
+                    + "<div style='"
+                    + "background-color: %s;"
+                    + "color: %s;"
+                    + "padding: 10px 14px;"
+                    + "%s"
+                    + "%s"
+                    + "max-width: 75%%;"
+                    + "min-width: 60px;"
+                    + "overflow-wrap: break-word;"
+                    + "box-shadow: 0 1px 2px rgba(0,0,0,0.1);"
+                    + "font-size: 14px;"
+                    + "line-height: 1.5;"
+                    + "text-align: %s;"
+                    + "'>"
+                    + "<div style='font-size: 0.85em; color: #5E5E5E; margin-bottom: 5px; font-weight: bold;'>"
+                    + "%s"
+                    + "</div>"
+                    + "%s"
+                    + "</div>"
+                    + "</div>",
+                    (alignment == SwingConstants.RIGHT) ? "flex-end" : "flex-start",
+                    toHexString(bgColor),
+                    toHexString(fgColor),
+                    borderRadius,
+                    marginStyle,
+                    (alignment == SwingConstants.RIGHT) ? "right" : "left",
+                    escapeHtml(displayName),
+                    escapeHtml(messageContent)
             );
-            
+
             try {
                 editorKit.insertHTML(doc, doc.getLength(), htmlContent, 0, 0, null);
                 msg_area.setCaretPosition(doc.getLength());
@@ -310,24 +497,32 @@ public class ChatServer extends JFrame {
         });
     }
 
-    private static void appendMyMessage(String message) {
-        appendMessage(message, MY_MESSAGE_COLOR, TEXT_COLOR, StyleConstants.ALIGN_RIGHT);
-    }
-
-    private static void appendOtherMessage(String message) {
-        // في الخادم: الرسائل المستلمة من العميل هي "رسائل الطرف الآخر"
-        appendMessage(message, OTHER_MESSAGE_COLOR, TEXT_COLOR, StyleConstants.ALIGN_LEFT);
-    }
-
     private static void appendSystemMessage(String message) {
         SwingUtilities.invokeLater(() -> {
             HTMLEditorKit editorKit = (HTMLEditorKit) msg_area.getEditorKit();
             HTMLDocument doc = (HTMLDocument) msg_area.getDocument();
+
             String htmlContent = String.format(
-                "<div style='text-align: center; color:%s; margin: 5px 0;'><i>%s</i></div>",
-                toHexString(SYSTEM_MESSAGE_COLOR),
-                escapeHtml(message)
+                    "<div style='"
+                    + "text-align: center;"
+                    + "margin: 12px 0;"
+                    + "'>"
+                    + "<span style='"
+                    + "display: inline-block;"
+                    + "background-color: #f0f0f0;"
+                    + "color: #666;"
+                    + "padding: 6px 16px;"
+                    + "border-radius: 14px;"
+                    + "font-size: 0.86em;"
+                    + "font-style: italic;"
+                    + "box-shadow: 0 1px 2px rgba(0,0,0,0.05);"
+                    + "'>"
+                    + "%s"
+                    + "</span>"
+                    + "</div>",
+                    escapeHtml(message)
             );
+
             try {
                 editorKit.insertHTML(doc, doc.getLength(), htmlContent, 0, 0, null);
                 msg_area.setCaretPosition(doc.getLength());
@@ -343,30 +538,20 @@ public class ChatServer extends JFrame {
 
     private static String escapeHtml(String text) {
         return text.replace("&", "&amp;")
-                   .replace("<", "&lt;")
-                   .replace(">", "&gt;")
-                   .replace("\"", "&quot;")
-                   .replace("'", "&#x27;")
-                   .replace("/", "&#x2F;")
-                   .replace("\n", "<br/>");
-    }
-
-    private void startFileReceiverActionPerformed(ActionEvent evt) {
-        if (!FileReceiver.isFileReceiverActive()) {
-            FileReceiver.startFileReceiver();
-            startFileReceiverButton.setText("File Receiver Active");
-            startFileReceiverButton.setEnabled(false);
-            appendSystemMessage("--- File Receiver Started ---");
-        } else {
-            JOptionPane.showMessageDialog(this, "File receiver is already active.", "File Receiver", JOptionPane.WARNING_MESSAGE);
-        }
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#x27;")
+                .replace("/", "&#x2F;")
+                .replace("\n", "<br/>");
     }
 
     private void setChatControlsEnabled(boolean enabled) {
         msg_text.setEnabled(enabled);
         msg_send.setEnabled(enabled);
-        startVoiceCallButton.setEnabled(enabled);
-        startVideoCallButton.setEnabled(enabled);
+        voiceCallButton.setEnabled(enabled);
+        videoCallButton.setEnabled(enabled);
+        fileTransferButton.setEnabled(enabled);
     }
 
     private void startServerThread() {
@@ -374,11 +559,14 @@ public class ChatServer extends JFrame {
             serverRunning.set(true);
             try {
                 serversocket = new ServerSocket(CHAT_PORT);
-                SwingUtilities.invokeLater(() -> serverStatusLabel.setText("Waiting for connection on port " + CHAT_PORT + "..."));
+                SwingUtilities.invokeLater(() -> {
+                    serverStatusLabel.setText("Waiting for connection on port " + CHAT_PORT + "...");
+                    serverStatusLabel.setForeground(new Color(255, 165, 0)); // Orange for waiting
+                });
                 appendSystemMessage("Server started, waiting for client...");
 
                 socket = serversocket.accept();
-                
+
                 din = new DataInputStream(socket.getInputStream());
                 dout = new DataOutputStream(socket.getOutputStream());
 
@@ -387,18 +575,20 @@ public class ChatServer extends JFrame {
                     connectedClientUsername = initialMessage.substring("USERNAME:".length());
                     SwingUtilities.invokeLater(() -> {
                         serverStatusLabel.setText("Client Connected: " + connectedClientUsername);
+                        serverStatusLabel.setForeground(new Color(40, 167, 69)); // Green for connected
                         setChatControlsEnabled(true);
                     });
                     appendSystemMessage("--- Client " + connectedClientUsername + " Connected ---");
                 } else {
                     SwingUtilities.invokeLater(() -> {
                         serverStatusLabel.setText("Client Connected (No Username)");
+                        serverStatusLabel.setForeground(new Color(40, 167, 69)); // Green for connected
                         setChatControlsEnabled(true);
                     });
                     appendSystemMessage("--- Client Connected (No Username) ---");
                     appendOtherMessage(initialMessage);
                 }
-                
+
                 String msgin = "";
                 while (socket.isConnected() && !socket.isClosed() && serverRunning.get()) {
                     msgin = din.readUTF();
@@ -411,72 +601,156 @@ public class ChatServer extends JFrame {
                 if (errorMessage != null && errorMessage.contains("Address already in use")) {
                     errorMessage = "Port " + CHAT_PORT + " is already in use. Please close other instances.";
                 } else if (errorMessage != null && errorMessage.contains("Connection reset")) {
-                     errorMessage = "Client disconnected unexpectedly.";
+                    errorMessage = "Client disconnected unexpectedly.";
+                } else if (errorMessage != null && errorMessage.contains("Socket closed")) {
+                    errorMessage = "Server socket closed.";
                 }
                 final String displayError = errorMessage != null ? errorMessage : "An unknown network error occurred.";
-                
-                e.printStackTrace();
+
                 SwingUtilities.invokeLater(() -> {
                     serverStatusLabel.setText("Error: " + displayError);
+                    serverStatusLabel.setForeground(new Color(220, 53, 69)); // Red for error
                     setChatControlsEnabled(false);
                 });
                 appendSystemMessage("ERROR: " + displayError);
             } finally {
                 try {
-                    if (din != null) din.close();
-                    if (dout != null) dout.close();
-                    if (socket != null) socket.close();
-                    if (!serverRunning.get() && serversocket != null) {
+                    if (din != null) {
+                        din.close();
+                    }
+                    if (dout != null) {
+                        dout.close();
+                    }
+                    if (socket != null) {
+                        socket.close();
+                    }
+                    // Only close serversocket if it's the main server thread exiting cleanly,
+                    // or if the window is closing.
+                    if (!serverRunning.get() && serversocket != null && !serversocket.isClosed()) {
                         serversocket.close();
                     }
                     SwingUtilities.invokeLater(() -> {
                         serverStatusLabel.setText("Server Stopped.");
+                        serverStatusLabel.setForeground(Color.GRAY);
+                        setChatControlsEnabled(false);
+                        // Reset media buttons on server stop
+                        // Updated calls to updateMediaButtonState with icon paths
+                        updateMediaButtonState(voiceCallButton, false, "📞 Start Voice", "📞 End Voice", new Color(77, 171, 247), new Color(220, 53, 69), "/icons/call_icon.png", "/icons/end_call_icon.png");
+                        updateMediaButtonState(videoCallButton, false, "📹 Start Video", "📹 End Video", new Color(77, 171, 247), new Color(220, 53, 69), "/icons/video_call.png", "/icons/video_camera_front_off.png");
+                        updateFileTransferButtonState(false);
+                        voiceActivityLabel.setText("Voice: Off");
+                        voiceActivityLabel.setForeground(Color.GRAY);
+                        receivedVideoStatusLabel.setText("Video: Off");
+                        receivedVideoStatusLabel.setForeground(Color.GRAY);
+                        fileReceiveStatusLabel.setText("File Server Off");
+                        fileReceiveStatusLabel.setForeground(Color.GRAY);
                     });
                     appendSystemMessage("--- Server Stopped ---");
                 } catch (IOException e) {
-                    e.printStackTrace();
                     appendSystemMessage("Error closing resources: " + e.getMessage());
                 }
             }
         }, "ChatServerMainThread").start();
     }
 
-    public static void main(String args[]) {
-        try {
-            UIManager.setLookAndFeel(new FlatLightLaf());
-        } catch (UnsupportedLookAndFeelException ex) {
-            System.err.println("Failed to initialize FlatLaf: " + ex);
-        }
-
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                new ChatServer().setVisible(true);
-            }
-        });
-    }
-
     @Override
     protected void processWindowEvent(java.awt.event.WindowEvent e) {
         if (e.getID() == java.awt.event.WindowEvent.WINDOW_CLOSING) {
-            serverRunning.set(false);
+            serverRunning.set(false); // Signal the server thread to stop
             if (VoiceServer.isVoiceCallActive()) {
                 VoiceServer.stopVoiceServer();
             }
             if (VideoServer.isVideoCallActive()) {
-                VideoServer.stopVideoServer(); 
+                VideoServer.stopVideoServer();
             }
             if (FileReceiver.isFileReceiverActive()) {
                 FileReceiver.stopFileReceiver();
             }
-            if (serversocket != null) {
+            if (serversocket != null && !serversocket.isClosed()) {
                 try {
-                    serversocket.close();
+                    serversocket.close(); // Close the server socket explicitly
                 } catch (IOException ex) {
-                    System.err.println("Error closing main server socket: " + ex.getMessage());
+                    System.err.println("Error closing main server socket during shutdown: " + ex.getMessage());
                 }
             }
-            dispose();
+            dispose(); // Release window resources
         }
         super.processWindowEvent(e);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            try {
+                FlatLightLaf.setup();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            new ChatServer().setVisible(true);
+        });
+    }
+
+    // --- Inner Class for Placeholder Text ---
+    private static class PlaceholderRenderer extends FocusAdapter implements DocumentListener {
+        private final JTextArea textArea;
+        private final String placeholder;
+        private boolean showPlaceholder = true;
+
+        public PlaceholderRenderer(JTextArea textArea, String placeholder) {
+            this.textArea = textArea;
+            this.placeholder = placeholder;
+            textArea.getDocument().addDocumentListener(this);
+            textArea.addFocusListener(this);
+            updatePlaceholderVisibility();
+
+            textArea.setUI(new BasicTextAreaUI() {
+                @Override
+                protected void paintSafely(Graphics g) {
+                    super.paintSafely(g);
+                    if (showPlaceholder) {
+                        Graphics2D g2 = (Graphics2D) g.create();
+                        g2.setColor(textArea.getDisabledTextColor());
+                        g2.setFont(textArea.getFont());
+
+                        Insets insets = textArea.getInsets();
+                        FontMetrics fm = g2.getFontMetrics();
+                        int x = insets.left + 5; // Small offset for better alignment
+                        int y = insets.top + fm.getAscent();
+
+                        g2.drawString(placeholder, x, y);
+                        g2.dispose();
+                    }
+                }
+            });
+        }
+
+        private void updatePlaceholderVisibility() {
+            showPlaceholder = textArea.getText().isEmpty() && !textArea.hasFocus();
+            textArea.repaint();
+        }
+
+        @Override
+        public void insertUpdate(DocumentEvent e) {
+            updatePlaceholderVisibility();
+        }
+
+        @Override
+        public void removeUpdate(DocumentEvent e) {
+            updatePlaceholderVisibility();
+        }
+
+        @Override
+        public void changedUpdate(DocumentEvent e) {
+            updatePlaceholderVisibility();
+        }
+
+        @Override
+        public void focusGained(FocusEvent e) {
+            updatePlaceholderVisibility();
+        }
+
+        @Override
+        public void focusLost(FocusEvent e) {
+            updatePlaceholderVisibility();
+        }
     }
 }

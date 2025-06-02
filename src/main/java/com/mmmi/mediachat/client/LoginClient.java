@@ -21,14 +21,13 @@ public class LoginClient extends JFrame {
     private void initComponents() {
         setTitle("MediaChat - Login");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(450, 300); // 
+        setSize(450, 300);
         setResizable(false);
-        setLocationRelativeTo(null); // وضع النافذة في المنتصف
+        setLocationRelativeTo(null);
 
         JPanel mainPanel = new JPanel(new MigLayout("insets 30, fill", "[grow, fill]", "[][][][][]"));
-        mainPanel.setBackground(new Color(240, 240, 240)); 
+        mainPanel.setBackground(new Color(240, 240, 240));
 
-        // أيقونة أو شعار (يمكنك استبدالها بصورة حقيقية إذا أردت)
         JLabel logoLabel = new JLabel("💬 MediaChat", SwingConstants.CENTER);
         logoLabel.setFont(new Font("Segoe UI", Font.BOLD, 28));
         logoLabel.setForeground(new Color(0, 123, 255));
@@ -41,33 +40,31 @@ public class LoginClient extends JFrame {
 
         usernameField = new JTextField();
         usernameField.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        //
-        usernameField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(180, 180, 180)), // border عادي
-                BorderFactory.createEmptyBorder(10, 15, 10, 15)
-        ));
+        usernameField.putClientProperty("JTextField.placeholderText", "Username");
+        usernameField.putClientProperty("JTextField.roundRect", true);
+
         usernameField.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 connectActionPerformed();
             }
         });
-        mainPanel.add(usernameField, "growx, wrap, h 45!"); // زيادة ارتفاع الحقل
+        mainPanel.add(usernameField, "growx, wrap, h 45!");
 
         connectButton = new JButton("Connect to Chat");
         connectButton.setFont(new Font("Segoe UI", Font.BOLD, 17));
         connectButton.setBackground(new Color(0, 123, 255));
         connectButton.setForeground(Color.WHITE);
         connectButton.setFocusPainted(false);
-        connectButton.setBorder(BorderFactory.createEmptyBorder(12, 25, 12, 25)); // هامش أكبر
-        //
+        connectButton.putClientProperty("JButton.buttonType", "roundRect");
+
         connectButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 connectActionPerformed();
             }
         });
-        mainPanel.add(connectButton, "growx, wrap, gaptop 25, h 50!"); // زر أكبر وارتفاع أعلى
+        mainPanel.add(connectButton, "growx, wrap, gaptop 25, h 50!");
 
         statusLabel = new JLabel(" ");
         statusLabel.setFont(new Font("Segoe UI", Font.ITALIC, 12));
@@ -83,15 +80,13 @@ public class LoginClient extends JFrame {
         String username = usernameField.getText().trim();
         if (username.isEmpty()) {
             statusLabel.setText("Please enter a username to continue.");
-            statusLabel.setForeground(new Color(220, 53, 69)); // لون أحمر للتنبيه
+            statusLabel.setForeground(new Color(220, 53, 69));
             usernameField.requestFocusInWindow();
             return;
         }
 
-        // إخفاء نافذة تسجيل الدخول
         this.dispose();
 
-        // بدء ChatClient مع اسم المستخدم المحدد
         SwingUtilities.invokeLater(() -> {
             new ChatClient(username).setVisible(true);
         });
@@ -99,7 +94,13 @@ public class LoginClient extends JFrame {
 
     public static void main(String[] args) {
         try {
+            UIManager.put("TextComponent.arc", 20);
+            UIManager.put("Component.arc", 10);
+            UIManager.put("Button.arc", 10);
+            
             UIManager.setLookAndFeel(new FlatLightLaf());
+            UIManager.put("TextField.placeholderForeground", new Color(180, 180, 180));
+            UIManager.put("Component.focusWidth", 1);
         } catch (UnsupportedLookAndFeelException ex) {
             System.err.println("Failed to initialize FlatLaf: " + ex);
         }
