@@ -16,17 +16,33 @@
         <dependency>
             <groupId>com.github.sarxos</groupId>
             <artifactId>webcam-capture</artifactId>
-            <version>0.3.12</version> </dependency>
+            <version>0.3.12</version>
+        </dependency>
 
         <dependency>
             <groupId>com.formdev</groupId>
             <artifactId>flatlaf</artifactId>
-            <version>3.4</version> </dependency>
+            <version>3.4</version>
+        </dependency>
 
         <dependency>
             <groupId>com.miglayout</groupId>
             <artifactId>miglayout-swing</artifactId>
-            <version>11.0</version> </dependency>
+            <version>11.0</version>
+        </dependency>
+
+            <dependency>
+                <groupId>org.xhtmlrenderer</groupId>
+                <artifactId>flying-saucer-core</artifactId>
+                <version>9.1.22</version>
+                  <type>jar</type>
+            </dependency>
+
+            <dependency>
+                <groupId>org.xhtmlrenderer</groupId>
+                <artifactId>flying-saucer-pdf</artifactId>
+                <version>9.1.22</version>
+            </dependency>
 
     </dependencies>
 </project>
