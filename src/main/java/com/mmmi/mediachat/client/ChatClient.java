@@ -52,11 +52,13 @@ public class ChatClient extends JFrame {
 
     private String username;
 
-    private static final Color MY_MESSAGE_COLOR = new Color(208, 235, 255);
-    private static final Color OTHER_MESSAGE_COLOR = new Color(232, 232, 250);
-    private static final Color SYSTEM_MESSAGE_COLOR = new Color(200, 200, 200);
-    private static final Color TEXT_COLOR = Color.BLACK;
-    private static final Font MESSAGE_FONT = new Font("Segoe UI", Font.PLAIN, 13);
+private static final Color MY_MESSAGE_COLOR = new Color(208, 235, 255);
+private static final Color OTHER_MESSAGE_COLOR = new Color(232, 232, 250);
+private static final Color SYSTEM_MESSAGE_COLOR = new Color(220, 220, 220);
+private static final Color BACKGROUND_COLOR = new Color(250, 250, 250);
+private static final Color TEXT_COLOR = Color.BLACK;
+
+private static final Font MESSAGE_FONT = new Font("Segoe UI", Font.PLAIN, 13);
 
     public ChatClient(String username) {
         this.username = username;
@@ -85,6 +87,7 @@ public class ChatClient extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(850, 800);
         setLocationRelativeTo(null);
+        getContentPane().setBackground(BACKGROUND_COLOR);
     }
 
     private void initComponents() {
@@ -198,25 +201,48 @@ public class ChatClient extends JFrame {
     }
 
     private void createMediaControls(JPanel mainPanel) {
-        JPanel mediaControlPanel = new JPanel(new MigLayout("fillx, insets 0", "[grow, fill][grow, fill][grow, fill][grow, fill]", "[]"));
+        JPanel mediaControlPanel = new JPanel(new MigLayout(
+            "fillx, insets 0", 
+            "[grow,fill][pref!][20!][pref!][40!][pref!][20!][pref!][grow,fill]", // توزيع الأزرار والمسافات
+            "[]"
+        ));
         mediaControlPanel.setBorder(BorderFactory.createTitledBorder("Media Controls"));
 
         startVoiceCallButton = createMediaButton("Start Voice Call", new Color(77, 171, 247));
         endVoiceCallButton = createMediaButton("End Voice Call", new Color(220, 53, 69));
-
         startVideoCallButton = createMediaButton("Start Video Call", new Color(77, 171, 247));
         endVideoCallButton = createMediaButton("End Video Call", new Color(220, 53, 69));
 
-        startVoiceCallButton.addActionListener(e -> startVoiceCall());
-        endVoiceCallButton.addActionListener(e -> endVoiceCall());
+        endVoiceCallButton.setVisible(false);
+        endVideoCallButton.setVisible(false);
 
-        startVideoCallButton.addActionListener(e -> startVideoCall());
-        endVideoCallButton.addActionListener(e -> endVideoCall());
+        startVoiceCallButton.addActionListener(e -> {
+            startVoiceCall();
+            startVoiceCallButton.setVisible(false);
+            endVoiceCallButton.setVisible(true);
+        });
+        endVoiceCallButton.addActionListener(e -> {
+            endVoiceCall();
+            startVoiceCallButton.setVisible(true);
+            endVoiceCallButton.setVisible(false);
+        });
 
-        mediaControlPanel.add(startVoiceCallButton, "growx");
-        mediaControlPanel.add(endVoiceCallButton, "growx");
-        mediaControlPanel.add(startVideoCallButton, "growx");
-        mediaControlPanel.add(endVideoCallButton, "growx, wrap");
+        startVideoCallButton.addActionListener(e -> {
+            startVideoCall();
+            startVideoCallButton.setVisible(false);
+            endVideoCallButton.setVisible(true);
+        });
+        endVideoCallButton.addActionListener(e -> {
+            endVideoCall();
+            startVideoCallButton.setVisible(true);
+            endVideoCallButton.setVisible(false);
+        });
+
+        // الأربعة أزرار في صف واحد مع مسافات بينهم
+        mediaControlPanel.add(startVoiceCallButton, "center");
+        mediaControlPanel.add(endVoiceCallButton, "center");
+        mediaControlPanel.add(startVideoCallButton, "center");
+        mediaControlPanel.add(endVideoCallButton, "center");
 
         mainPanel.add(mediaControlPanel, "growx, wrap");
     }
