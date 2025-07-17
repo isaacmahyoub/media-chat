@@ -7,16 +7,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FileSender {
 
-    // private static final String SERVER_ADDRESS = "localhost";
+    private static final String SERVER_ADDRESS = "localhost";
     // private static final String SERVER_ADDRESS = "0.0.0.0";
-    private static final String SERVER_ADDRESS = "13.49.68.159";
 
     private static final int FILE_PORT = 1204; // 
     private static JProgressBar fileSendProgressBar;
     private static JLabel fileSendStatusLabel;
     private static AtomicBoolean isSending = new AtomicBoolean(false);
 
-    // لربط شريط التقدم ومؤشر الحالة من واجهة ChatClient
     public static void setFileTransferUI(JProgressBar progressBar, JLabel statusLabel) {
         fileSendProgressBar = progressBar;
         fileSendStatusLabel = statusLabel;
@@ -49,13 +47,12 @@ public class FileSender {
         new Thread(() -> {
             Socket socket = null;
             BufferedInputStream bis = null;
-            DataOutputStream dos = null; // نستخدم DataOutputStream لإرسال بيانات الملف
+            DataOutputStream dos = null;
 
             try {
                 socket = new Socket(SERVER_ADDRESS, FILE_PORT);
                 dos = new DataOutputStream(socket.getOutputStream());
 
-                // إرسال معلومات الملف أولاً: اسم الملف وحجمه
                 dos.writeUTF(file.getName());
                 dos.writeLong(file.length());
                 dos.flush();
@@ -80,7 +77,7 @@ public class FileSender {
                         }
                     });
                 }
-                dos.flush(); // للتأكد من إرسال جميع البايتات العالقة
+                dos.flush();
 
                 SwingUtilities.invokeLater(() -> {
                     if (fileSendStatusLabel != null) fileSendStatusLabel.setText("File '" + file.getName() + "' sent successfully!");
@@ -105,7 +102,7 @@ public class FileSender {
                 } catch (IOException e) {
                     System.err.println("Error closing file sender resources: " + e.getMessage());
                 }
-                isSending.set(false); // تم الانتهاء من عملية الإرسال
+                isSending.set(false);
                 SwingUtilities.invokeLater(() -> {
                      if (fileSendStatusLabel != null && !fileSendStatusLabel.getText().startsWith("Error")) {
                         fileSendStatusLabel.setText("Ready to send files.");
