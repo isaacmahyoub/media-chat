@@ -93,6 +93,12 @@ MediaChat is a full-featured communication application built using Java Swing fo
 ### Login Interface
 ![Login Interface](https://github.com/user-attachments/assets/2d0bcb47-cef1-4323-b2cb-a19a353771d9)
 
+
+![Login Interface]<img width="547" height="367" alt="image" src="https://github.com/user-attachments/assets/9cece8b0-358c-4d09-860c-c4ecca3adf02" />
+
+
+
+
 ### Chat Server Interface
 ![Chat Server Interface](https://github.com/user-attachments/assets/91c679d1-274c-4e43-9e5a-3db58583507a)
 
