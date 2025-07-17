@@ -12,9 +12,8 @@ import javax.swing.SwingUtilities;
 
 public class VoiceClient {
 
-    // private static final String SERVER_ADDRESS = "localhost";
+    private static final String SERVER_ADDRESS = "localhost";
     // private static final String SERVER_ADDRESS = "0.0.0.0";
-    private static final String SERVER_ADDRESS = "13.49.68.159";
 
     private static final int VOICE_PORT = 1202;
     private static Socket voiceSocket;
