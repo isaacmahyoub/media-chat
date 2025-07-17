@@ -625,8 +625,8 @@ public class ChatServer extends JFrame {
                         serverStatusLabel.setText("Server Stopped.");
                         serverStatusLabel.setForeground(Color.GRAY);
                         setChatControlsEnabled(false);
-                        updateMediaButtonState(voiceCallButton, false, "📞 Start Voice", "📞 End Voice", new Color(77, 171, 247), new Color(220, 53, 69), "/icons/call_icon.png", "/icons/end_call_icon.png");
-                        updateMediaButtonState(videoCallButton, false, "📹 Start Video", "📹 End Video", new Color(77, 171, 247), new Color(220, 53, 69), "/icons/video_call.png", "/icons/video_camera_front_off.png");
+                        updateMediaButtonState(voiceCallButton, false, "Start Voice", "End Voice", new Color(77, 171, 247), new Color(220, 53, 69), "/icons/call_icon.png", "/icons/end_call_icon.png");
+                        updateMediaButtonState(videoCallButton, false, "Start Video", "End Video", new Color(77, 171, 247), new Color(220, 53, 69), "/icons/video_call.png", "/icons/video_camera_front_off.png");
                         updateFileTransferButtonState(false);
                         voiceActivityLabel.setText("Voice: Off");
                         voiceActivityLabel.setForeground(Color.GRAY);
