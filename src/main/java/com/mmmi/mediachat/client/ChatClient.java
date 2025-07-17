@@ -44,9 +44,8 @@ public class ChatClient extends JFrame {
     static DataInputStream din;
     static DataOutputStream dout;
 
-    // private static final String SERVER_ADDRESS = "localhost";
+    private static final String SERVER_ADDRESS = "localhost";
     // private static final String SERVER_ADDRESS = "0.0.0.0";
-    private static final String SERVER_ADDRESS = "13.49.68.159";
 
     private static final int CHAT_PORT = 1201;
     private static AtomicBoolean clientRunning = new AtomicBoolean(false);
@@ -328,7 +327,7 @@ public class ChatClient extends JFrame {
         fileSendProgressBar.putClientProperty("JProgressBar.roundRect", true);
         fileTransferPanel.add(fileSendProgressBar, "growx, height 25!");
 
-        fileTransferButton = createMediaToggleButton("📤 Send File", "⏹ Cancel Sending", FileSender.isSendingFile(), new Color(108, 117, 125), new Color(255, 193, 7), null, null);
+        fileTransferButton = createMediaToggleButton("Send File", "Cancel Sending", FileSender.isSendingFile(), new Color(108, 117, 125), new Color(255, 193, 7), null, null);
         fileTransferButton.addActionListener(this::sendFileActionPerformed);
         fileTransferPanel.add(fileTransferButton, "width 180!, wrap");
 
@@ -341,8 +340,8 @@ public class ChatClient extends JFrame {
     }
 
     private void updateFileTransferButtonState(boolean isActive) {
-        String startText = "📤 Send File";
-        String stopText = "⏹ Cancel Sending";
+        String startText = "Send File";
+        String stopText = "Cancel Sending";
         Color startColor = new Color(108, 117, 125);
         Color stopColor = new Color(255, 193, 7);
 
@@ -588,7 +587,7 @@ public class ChatClient extends JFrame {
                     final String receivedMsg = msgin;
                     SwingUtilities.invokeLater(() -> appendOtherMessage(receivedMsg));
                 }
-                break; // خرج من الحلقة إذا تم الاتصال وانتهى
+                break;
             } catch (ConnectException e) {
                 SwingUtilities.invokeLater(() -> {
                     clientStatusLabel.setText("Waiting for server...");
