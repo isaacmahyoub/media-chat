@@ -28,7 +28,7 @@ public class LoginClient extends JFrame {
         JPanel mainPanel = new JPanel(new MigLayout("insets 30, fill", "[grow, fill]", "[][][][][]"));
         mainPanel.setBackground(new Color(240, 240, 240));
 
-        JLabel logoLabel = new JLabel("💬 MediaChat", SwingConstants.CENTER);
+        JLabel logoLabel = new JLabel("MediaChat", SwingConstants.CENTER);
         logoLabel.setFont(new Font("Segoe UI", Font.BOLD, 28));
         logoLabel.setForeground(new Color(0, 123, 255));
         mainPanel.add(logoLabel, "wrap, gapbottom 20");
