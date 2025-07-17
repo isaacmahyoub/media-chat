@@ -11,9 +11,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class VideoClient {
 
-    // private static final String SERVER_ADDRESS = "localhost";
+    private static final String SERVER_ADDRESS = "localhost";
     // private static final String SERVER_ADDRESS = "0.0.0.0";
-    private static final String SERVER_ADDRESS = "13.49.68.159";
 
     private static final int VIDEO_PORT = 1203;
     private static Socket videoSocket;
@@ -22,13 +21,12 @@ public class VideoClient {
     private static volatile boolean isVideoCallActive = false;
     private static AtomicBoolean clientRunning = new AtomicBoolean(false);
     private static JLabel localVideoDisplayLabel;
-    private static JLabel cameraStatusLabel; // مؤشر حالة الكاميرا
+    private static JLabel cameraStatusLabel;
 
     public static void setLocalVideoDisplayLabel(JLabel label) {
         localVideoDisplayLabel = label;
     }
 
-    // دالة لتعيين مؤشر حالة الكاميرا من ChatClient
     public static void setCameraStatusLabel(JLabel label) {
         cameraStatusLabel = label;
     }
@@ -55,7 +53,7 @@ public class VideoClient {
                     return;
                 }
                 webcam.open();
-                // webcam.setViewSize(new Dimension(640, 480)); // يمكنك ضبط الدقة هنا
+                // webcam.setViewSize(new Dimension(640, 480));
 
                 videoSocket = new Socket(SERVER_ADDRESS, VIDEO_PORT);
                 System.out.println("Video Client connected to Video Server on " + SERVER_ADDRESS + ":" + VIDEO_PORT);
@@ -119,7 +117,7 @@ public class VideoClient {
             return;
         }
         isVideoCallActive = false;
-        clientRunning.set(false); // إيقاف الثريدات التابعة
+        clientRunning.set(false);
 
         if (webcam != null && webcam.isOpen()) {
             webcam.close();
@@ -146,7 +144,7 @@ public class VideoClient {
         if (localVideoDisplayLabel != null) {
             SwingUtilities.invokeLater(() -> localVideoDisplayLabel.setIcon(null));
         }
-        // تحديث حالة مؤشر الكاميرا
+        
         SwingUtilities.invokeLater(() -> {
             if (cameraStatusLabel != null) {
                 cameraStatusLabel.setText("Cam: Off");
