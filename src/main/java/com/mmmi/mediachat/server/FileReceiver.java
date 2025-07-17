@@ -17,10 +17,8 @@ public class FileReceiver {
     private static AtomicBoolean isReceiving = new AtomicBoolean(false);
     private static AtomicBoolean serverRunning = new AtomicBoolean(false);
 
-    // المجلد الذي سيتم حفظ الملفات فيه
     private static final String DOWNLOAD_DIR = "ReceivedFiles"; 
 
-    // لربط شريط التقدم ومؤشر الحالة من واجهة ChatServer
     public static void setFileTransferUI(JProgressBar progressBar, JLabel statusLabel) {
         fileReceiveProgressBar = progressBar;
         fileReceiveStatusLabel = statusLabel;
@@ -38,10 +36,9 @@ public class FileReceiver {
         serverRunning.set(true);
         System.out.println("Attempting to start File Receiver...");
 
-        // التأكد من وجود مجلد التنزيلات
         File downloadFolder = new File(DOWNLOAD_DIR);
         if (!downloadFolder.exists()) {
-            downloadFolder.mkdirs(); // إنشاء المجلدات إذا لم تكن موجودة
+            downloadFolder.mkdirs();
         }
 
         new Thread(() -> {
@@ -52,23 +49,21 @@ public class FileReceiver {
                     if (fileReceiveStatusLabel != null) fileReceiveStatusLabel.setText("Waiting for file connection...");
                 });
 
-                while (serverRunning.get()) { // حلقة لانتظار اتصالات متعددة
+                while (serverRunning.get()) {
                     Socket clientSocket = null;
                     DataInputStream dis = null;
                     BufferedOutputStream bos = null;
 
                     try {
-                        clientSocket = fileServerSocket.accept(); // انتظار اتصال جديد
-                        isReceiving.set(true); // بدء الاستقبال
+                        clientSocket = fileServerSocket.accept();
+                        isReceiving.set(true);
                         System.out.println("File Client connected from " + clientSocket.getInetAddress().getHostAddress());
 
                         dis = new DataInputStream(clientSocket.getInputStream());
 
-                        // استقبال معلومات الملف أولاً
                         String fileName = dis.readUTF();
                         long fileSize = dis.readLong();
 
-                        // لتجنب overwriting الملفات بنفس الاسم
                         String uniqueFileName = generateUniqueFileName(fileName);
                         File outputFile = new File(DOWNLOAD_DIR, uniqueFileName);
 
@@ -102,7 +97,7 @@ public class FileReceiver {
                         }
                         bos.flush();
 
-                        if (totalBytesRead >= fileSize) { // تأكد من استلام الملف بالكامل
+                        if (totalBytesRead >= fileSize) {
                             SwingUtilities.invokeLater(() -> {
                                 if (fileReceiveStatusLabel != null) fileReceiveStatusLabel.setText("File '" + uniqueFileName + "' received successfully!");
                                 if (fileReceiveProgressBar != null) fileReceiveProgressBar.setValue(100);
@@ -119,7 +114,7 @@ public class FileReceiver {
                         }
 
                     } catch (IOException e) {
-                        if (serverRunning.get()) { // إذا كان الخادم لا يزال نشطًا
+                        if (serverRunning.get()) {
                             String errorMessage = "Error during file transfer: " + e.getMessage();
                             System.err.println(errorMessage);
                             e.printStackTrace();
@@ -136,7 +131,7 @@ public class FileReceiver {
                         } catch (IOException e) {
                             System.err.println("Error closing file receiver resources: " + e.getMessage());
                         }
-                        isReceiving.set(false); // تم الانتهاء من عملية الاستقبال
+                        isReceiving.set(false);
                         SwingUtilities.invokeLater(() -> {
                              if (fileReceiveStatusLabel != null && !fileReceiveStatusLabel.getText().startsWith("Error")) {
                                 fileReceiveStatusLabel.setText("Waiting for file connection...");
@@ -158,17 +153,17 @@ public class FileReceiver {
                     System.out.println("File Receiver stopped gracefully.");
                 }
             } finally {
-                stopFileReceiver(); // تأكد من إيقاف الخدمة عند انتهاء الثريد الرئيسي
+                stopFileReceiver();
             }
         }, "FileReceiverMainThread").start();
     }
 
     public static void stopFileReceiver() {
-        if (!isReceiving.get() && fileServerSocket == null) { // إذا لم يكن هناك استقبال ولا سيرفر سوكيت
+        if (!isReceiving.get() && fileServerSocket == null) {
             System.out.println("File receiver is already inactive.");
             return;
         }
-        serverRunning.set(false); // إشارة للثريد بالتوقف
+        serverRunning.set(false);
 
         if (fileServerSocket != null) {
             try {
@@ -179,7 +174,7 @@ public class FileReceiver {
                 fileServerSocket = null;
             }
         }
-        isReceiving.set(false); // تأكد من إعادة تعيين الحالة
+        isReceiving.set(false);
         SwingUtilities.invokeLater(() -> {
             if (fileReceiveStatusLabel != null) {
                 fileReceiveStatusLabel.setText("File Server Off");
@@ -196,7 +191,6 @@ public class FileReceiver {
         return String.format("%.2f %sB", bytes / Math.pow(1024, exp), pre);
     }
 
-    // لإنشاء اسم ملف فريد لتجنب التضارب
     private static String generateUniqueFileName(String originalFileName) {
         String name = originalFileName;
         String extension = "";
