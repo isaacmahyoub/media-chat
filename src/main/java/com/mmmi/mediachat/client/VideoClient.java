@@ -11,7 +11,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class VideoClient {
 
-    private static final String SERVER_ADDRESS = "localhost";
+    // private static final String SERVER_ADDRESS = "localhost";
+    // private static final String SERVER_ADDRESS = "0.0.0.0";
+    private static final String SERVER_ADDRESS = "13.49.68.159";
+
     private static final int VIDEO_PORT = 1203;
     private static Socket videoSocket;
     private static Webcam webcam;

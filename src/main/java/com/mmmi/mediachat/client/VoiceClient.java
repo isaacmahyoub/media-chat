@@ -12,7 +12,10 @@ import javax.swing.SwingUtilities;
 
 public class VoiceClient {
 
-    private static final String SERVER_ADDRESS = "localhost";
+    // private static final String SERVER_ADDRESS = "localhost";
+    // private static final String SERVER_ADDRESS = "0.0.0.0";
+    private static final String SERVER_ADDRESS = "13.49.68.159";
+
     private static final int VOICE_PORT = 1202;
     private static Socket voiceSocket;
     private static TargetDataLine microphoneLine;
@@ -108,7 +111,7 @@ public class VoiceClient {
                             }
                         }
                     } catch (IOException e) {
-                        System.err.println("❌ Mic Send Error: " + e.getMessage());
+                        System.err.println("Mic Send Error: " + e.getMessage());
                         SwingUtilities.invokeLater(() -> {
                             if (micActivityLabel != null) {
                                 micActivityLabel.setText("Mic: Send Error");
@@ -116,7 +119,7 @@ public class VoiceClient {
                             }
                         });
                     }
-                    System.out.println("🔚 VoiceClient: Microphone stream ended.");
+                    System.out.println("VoiceClient: Microphone stream ended.");
                 }, "VoiceClientSendThread").start();
 
                 new Thread(() -> {
@@ -134,7 +137,7 @@ public class VoiceClient {
                             });
                         }
                     } catch (IOException e) {
-                        System.err.println("❌ Speaker Receive Error: " + e.getMessage());
+                        System.err.println("Speaker Receive Error: " + e.getMessage());
                         SwingUtilities.invokeLater(() -> {
                             if (voiceActivityLabel != null) {
                                 voiceActivityLabel.setText("Voice: Receive Error");
@@ -142,11 +145,11 @@ public class VoiceClient {
                             }
                         });
                     }
-                    System.out.println("🔕 VoiceClient: Speaker stream ended.");
+                    System.out.println("VoiceClient: Speaker stream ended.");
                 }, "VoiceClientReceiveThread").start();
 
             } catch (LineUnavailableException | IOException e) {
-                System.err.println("❌ VoiceClient Init Error: " + e.getMessage());
+                System.err.println("VoiceClient Init Error: " + e.getMessage());
                 stopVoiceClient();
             }
         }, "VoiceClientMainThread").start();
@@ -169,7 +172,7 @@ public class VoiceClient {
                 voiceSocket.close();
             }
         } catch (IOException e) {
-            System.err.println("❌ Error during stop: " + e.getMessage());
+            System.err.println("Error during stop: " + e.getMessage());
         }
 
         SwingUtilities.invokeLater(() -> {
