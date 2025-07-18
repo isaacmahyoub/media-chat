@@ -91,19 +91,15 @@ MediaChat is a full-featured communication application built using Java Swing fo
 ##  📸  Screenshots
 
 ### Login Interface
-![Login Interface](https://github.com/user-attachments/assets/2d0bcb47-cef1-4323-b2cb-a19a353771d9)
-
-
-![Login Interface]<img width="547" height="367" alt="image" src="https://github.com/user-attachments/assets/9cece8b0-358c-4d09-860c-c4ecca3adf02" />
-
-
-
+<img width="547" height="367" alt="image" src="https://github.com/user-attachments/assets/b37a8a3e-81f3-47cc-bb6c-a3f64b9a9183" />
 
 ### Chat Server Interface
-![Chat Server Interface](https://github.com/user-attachments/assets/91c679d1-274c-4e43-9e5a-3db58583507a)
+<img width="1047" height="991" alt="image" src="https://github.com/user-attachments/assets/ff686dd2-dfcf-4f08-8647-baf1a2cab90b" />
+<img width="1047" height="991" alt="image" src="https://github.com/user-attachments/assets/ca7be344-4cb3-42d2-b406-cd7016f6ab2f" />
 
 ### Chat Client Interface
-![Chat Client Interface](https://github.com/user-attachments/assets/e18ea4c7-da70-4da3-af94-347d5fc65a79)
+<img width="1047" height="991" alt="image" src="https://github.com/user-attachments/assets/6fedc334-503f-4870-8d07-33d7f23eb3dc" />
+<img width="1047" height="991" alt="image" src="https://github.com/user-attachments/assets/ef5b13d3-ed5b-45f7-a346-2df6f81b90f7" />
 
 
 ## ⚠️ Known Issues and Future Enhancements
@@ -119,9 +115,9 @@ MediaChat is a full-featured communication application built using Java Swing fo
 ## 👥 Contributors
 
 * **Isaac Mahyoub Abdullah Abdulkhaliq**
+* **Mohammed Hassan Mohammed Abdullah**
 * **Moayad Abdulghani Abdullah Abdulkhaliq**
 * **Muneef Mustafa Abdullah Ibrahim**
-* **Mohammed Hassan Mohammed Abdullah**
 
 
 ## 🤝 Contributing
